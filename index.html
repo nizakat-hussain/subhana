@@ -344,6 +344,69 @@
 
   .final-wish .gold{ color:var(--gold); font-family:'Playfair Display', serif; font-style:italic; }
 
+  /* --- cut-the-cake extras --- */
+  #cutBtn{
+    margin-top:1.6rem;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.6s ease;
+  }
+  #cutBtn.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  .cut-message{
+    margin-top:1.4rem;
+    font-size:1.2rem;
+    line-height:1.6;
+    max-width:40ch;
+    margin-left:auto;
+    margin-right:auto;
+    opacity:0;
+    transform:translateY(14px);
+    transition:opacity 0.8s ease, transform 0.8s ease;
+  }
+  .cut-message.show{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .knife-line{
+    opacity:0;
+    transform-origin:top;
+    transform:scaleY(0);
+    transition:transform 0.35s ease, opacity 0.2s ease;
+  }
+  .knife-line.swipe{
+    opacity:1;
+    transform:scaleY(1);
+  }
+  .knife-line.done{
+    opacity:0;
+    transition:opacity 0.4s ease 0.3s;
+  }
+
+  .slice-wedge{
+    transition:transform 0.9s cubic-bezier(0.34,1.2,0.4,1);
+    transform-origin:center;
+  }
+  .slice-wedge.removed{
+    transform:translate(72px, 26px) rotate(12deg);
+  }
+
+  .gap-fill{
+    opacity:0;
+    transition:opacity 0.5s ease 0.5s;
+  }
+  .gap-fill.show{ opacity:1; }
+
+  .plate{
+    opacity:0;
+    transition:opacity 0.6s ease 0.6s;
+  }
+  .plate.show{ opacity:1; }
+
   /* ---------- FOOTER ---------- */
   footer{
     text-align:center;
@@ -916,7 +979,7 @@
   <ul class="nav-links" id="navLinks">
     <li><a href="#hero">Home</a></li>
     <li><a href="#message">Message</a></li>
-    <li><a href="#reasons">Reasons</a></li>
+    <li><a href="#moments">Moments</a></li>
     <li><a href="#gallery">Photos</a></li>
     <li><a href="#wish">Make a Wish</a></li>
   </ul>
@@ -1076,7 +1139,7 @@
     <p class="wish-instructions">Light the candles, then blow them out</p>
 
     <div class="cake-wrap">
-      <svg width="220" height="180" viewBox="0 0 220 180" xmlns="http://www.w3.org/2000/svg">
+      <svg width="300" height="180" viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg">
         <!-- flames -->
         <g id="flames">
           <path class="flame" data-flame="1" d="M60 46 C56 38, 64 34, 60 26 C68 32, 68 42, 60 46 Z" fill="#e8a34a"/>
@@ -1099,6 +1162,23 @@
         <rect x="15" y="102" width="190" height="42" rx="4" fill="#8f3a4f"/>
         <rect x="15" y="102" width="190" height="9" rx="4" fill="#e8cd9a" opacity="0.5"/>
         <rect x="10" y="144" width="200" height="18" rx="3" fill="#5c2434"/>
+
+        <!-- knife cut line -->
+        <line class="knife-line" id="knifeLine" x1="176" y1="60" x2="176" y2="166" stroke="#fff6ef" stroke-width="3" stroke-linecap="round"/>
+        <!-- empty gap left behind after slice is removed -->
+        <g class="gap-fill" id="gapFill">
+          <rect x="158" y="68" width="36" height="94" rx="2" style="fill:var(--plum-deep)"/>
+        </g>
+        <!-- the cut slice itself -->
+        <g class="slice-wedge" id="sliceWedge">
+          <rect x="158" y="68" width="36" height="8" fill="#e8cd9a" opacity="0.5"/>
+          <rect x="158" y="76" width="36" height="26" fill="#7a2f42"/>
+          <rect x="158" y="102" width="36" height="9" fill="#e8cd9a" opacity="0.5"/>
+          <rect x="158" y="111" width="36" height="33" fill="#8f3a4f"/>
+          <rect x="158" y="144" width="36" height="18" fill="#5c2434"/>
+        </g>
+        <!-- little plate the slice lands on -->
+        <ellipse class="plate" id="plate" cx="250" cy="150" rx="38" ry="10" fill="#3a1620" opacity="0.4"/>
       </svg>
     </div>
 
@@ -1107,6 +1187,11 @@
     <p class="final-wish" id="finalWish">
       Wherever life takes us, Subhana — <span class="gold">I hope it takes us there together.</span><br>
       Happy Birthday. I love you.
+    </p>
+
+    <button class="cake-btn" id="cutBtn">Let's cut the cake 🎂</button>
+    <p class="cut-message" id="cutMessage">
+      The first slice is yours, jaan. <span class="gold">Sweet beginnings ✦</span>
     </p>
   </div>
 </section>
@@ -1168,12 +1253,15 @@
     petalContainer.appendChild(el);
   }
 
-  // cake interaction
+  // cake interaction: light -> blow out -> wish -> reveal cut-cake button
   const lightBtn = document.getElementById('lightBtn');
   const flames = document.querySelectorAll('.flame');
   const smokes = document.querySelectorAll('.smoke');
   const finalWish = document.getElementById('finalWish');
+  const cutBtn = document.getElementById('cutBtn');
   let state = 'unlit'; // unlit -> lit -> blown
+
+  const showCutBtn = () => cutBtn.classList.add('show');
 
   lightBtn.addEventListener('click', () => {
     if(state === 'unlit'){
@@ -1185,9 +1273,42 @@
       smokes.forEach(s => s.classList.add('show'));
       lightBtn.disabled = true;
       lightBtn.textContent = 'Wish made ✦';
-      setTimeout(() => finalWish.classList.add('show'), 500);
+      setTimeout(() => {
+        finalWish.classList.add('show');
+        setTimeout(showCutBtn, 1400);
+      }, 500);
       state = 'blown';
     }
+  });
+
+  // cut the cake interaction
+  const knifeLine = document.getElementById('knifeLine');
+  const sliceWedge = document.getElementById('sliceWedge');
+  const gapFill = document.getElementById('gapFill');
+  const plate = document.getElementById('plate');
+  const cutMessage = document.getElementById('cutMessage');
+  let cutState = 'uncut';
+
+  cutBtn.addEventListener('click', () => {
+    if(cutState !== 'uncut') return;
+    cutState = 'cutting';
+    cutBtn.disabled = true;
+    cutBtn.textContent = 'Cutting...';
+
+    knifeLine.classList.add('swipe');
+
+    setTimeout(() => {
+      knifeLine.classList.add('done');
+      sliceWedge.classList.add('removed');
+      gapFill.classList.add('show');
+      plate.classList.add('show');
+    }, 380);
+
+    setTimeout(() => {
+      cutBtn.textContent = 'Slice served ✦';
+      cutMessage.classList.add('show');
+      cutState = 'done';
+    }, 1300);
   });
 
   // photo flip: hover (desktop) + click/tap (any device)
